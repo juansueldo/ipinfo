@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+
 // Ajustá esto según tu ORM (Sequelize, Prisma, etc.)
 const { IP } = require('../models'); 
 
