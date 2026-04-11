@@ -33,7 +33,6 @@ exports.getIPById = async (req, res) => {
 // ➕ Crear IP (TRACK VISIT)
 exports.createIP = async (req, res) => {
   try {
-    // 🧠 Obtener IP real
     let ip =
       req.headers['x-forwarded-for'] ||
       req.socket.remoteAddress ||
@@ -41,10 +40,8 @@ exports.createIP = async (req, res) => {
 
     ip = ip.split(',')[0].trim();
 
-    // limpiar IPv6 local
     if (ip === '::1') ip = '127.0.0.1';
 
-    // 🌍 Geolocalización
     let geoData = null;
 
     try {
@@ -54,19 +51,15 @@ exports.createIP = async (req, res) => {
       console.warn('Error obteniendo geo data:', err.message);
     }
 
-    // 📦 Datos del frontend
-    const {
-      path,
-      lang,
-      userAgent
-    } = req.body;
+    const { path, lang, userAgent } = req.body;
 
-    // 💾 Guardar en DB
     const newIP = await IP.create({
       ip,
-      country: geoData?.location?.country || null,
-      city: geoData?.location?.city || null,
+
       isp: geoData?.isp || null,
+      location: geoData?.location || null,
+      risk: geoData?.risk || null,
+
       path: path || null,
       lang: lang || null,
       userAgent: userAgent || null

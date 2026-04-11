@@ -8,5 +8,6 @@ async function syncModels() {
 }
 
 module.exports = {
-  IP
+  IP,
+  syncModels
 };

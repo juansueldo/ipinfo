@@ -1,5 +1,5 @@
 const app = require('./index');
-const { syncModels } = require('./src/models');
+const { syncModels } = require('./src/models/index');
 
 const PORT = process.env.PORT || 3000;
 
