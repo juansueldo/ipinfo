@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Analytics</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Leaflet (mapa) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    canvas { max-width: 600px; }
+    #map { height: 400px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<h2>📈 Visitas por día</h2>
+<canvas id="chart"></canvas>
+
+<h2>🌎 Mapa de visitas</h2>
+<div id="map"></div>
+
+<h2>🔥 Top páginas</h2>
+<ul id="top-pages"></ul>
+
+<script>
+const API = "https://ipinfo-tawny-psi.vercel.app/api/ips";
+
+// 📈 gráfico
+let chart;
+
+async function loadStats() {
+  const res = await fetch(`${API}/stats`);
+  const data = await res.json();
+
+  renderChart(data.visitsByDay);
+  renderPages(data.pages);
+}
+
+// 📈 Chart.js
+function renderChart(data) {
+  const labels = Object.keys(data);
+  const values = Object.values(data);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Visitas',
+        data: values
+      }]
+    }
+  });
+}
+
+// 🔥 Top páginas
+function renderPages(pages) {
+  const list = document.getElementById('top-pages');
+  list.innerHTML = '';
+
+  Object.entries(pages)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 5)
+    .forEach(([page, count]) => {
+      const li = document.createElement('li');
+      li.textContent = `${page} - ${count} visitas`;
+      list.appendChild(li);
+    });
+}
+
+// 🌎 MAPA
+const map = L.map('map').setView([20, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+}).addTo(map);
+
+async function loadMap() {
+  const res = await fetch(API);
+  const visits = await res.json();
+
+  visits.forEach(v => {
+    const lat = v.location?.latitude;
+    const lng = v.location?.longitude;
+
+    if (lat && lng) {
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(`${v.location?.country || ''} - ${v.location?.city || ''}`);
+    }
+  });
+}
+
+// 🚀 INIT
+loadStats();
+loadMap();
+
+// 🔄 actualizar cada 5 segundos
+setInterval(() => {
+  loadStats();
+}, 5000);
+
+</script>
+
+</body>
+</html>

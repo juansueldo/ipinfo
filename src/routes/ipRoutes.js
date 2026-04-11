@@ -10,5 +10,6 @@ router.post('/', ipController.createIP);
 router.get('/:id', ipController.getIPById);
 router.put('/:id', ipController.updateIP);
 router.delete('/:id', ipController.deleteIP);
+router.get('/stats', ipController.getStats);
 
 module.exports = router;

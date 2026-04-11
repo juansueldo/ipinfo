@@ -106,3 +106,35 @@ exports.deleteIP = async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar la IP' });
   }
 };
+
+exports.getStats = async (req, res) => {
+  try {
+    const visits = await IP.findAll();
+
+    // 📈 visitas por día
+    const visitsByDay = {};
+    const countries = {};
+    const pages = {};
+
+    visits.forEach(v => {
+      const date = new Date(v.createdAt).toISOString().split('T')[0];
+
+      visitsByDay[date] = (visitsByDay[date] || 0) + 1;
+
+      const country = v.location?.country || 'Unknown';
+      countries[country] = (countries[country] || 0) + 1;
+
+      const page = v.path || '/';
+      pages[page] = (pages[page] || 0) + 1;
+    });
+
+    res.json({
+      visitsByDay,
+      countries,
+      pages
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error generando estadísticas' });
+  }
+};
