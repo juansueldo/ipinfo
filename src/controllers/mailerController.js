@@ -11,7 +11,12 @@ const transporter = nodemailer.createTransport({
 exports.sendContact = async (req, res) => {
   try {
     const { name, email, message, lang } = req.body;
-
+    if (req.body.website) {
+      return res.status(400).json({ error: 'Spam detectado' });
+    }
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
     // 📩 Mail para vos
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
