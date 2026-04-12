@@ -23,6 +23,7 @@ app.get('/', (req, res) => {
 });
 // Rutas
 app.use('/api/ips', require('./src/routes/ipRoutes'));
+app.use('/api/mailer', require('./src/routes/mailer'));
 
 // Exportar la aplicación para usarla en server.js
 module.exports = app;
