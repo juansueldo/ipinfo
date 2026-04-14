@@ -36,7 +36,12 @@ exports.getIPById = async (req, res) => {
 // ➕ Crear IP (TRACK VISIT)
 exports.createIP = async (req, res) => {
   try {
-    let ip = req.ip;
+    let ip =
+      req.headers['x-forwarded-for'] ||
+      req.socket.remoteAddress ||
+      '';
+
+    ip = ip.split(',')[0].trim();
 
     if (ip === '::1') ip = '127.0.0.1';
 
