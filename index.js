@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 10, // max 10 requests por IP
+  max: 2, // max 2 requests por IP
   message: 'Demasiadas solicitudes, intentá más tarde'
 });
 

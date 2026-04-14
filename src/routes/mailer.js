@@ -6,5 +6,4 @@ const mailerController = require('../controllers/mailerController');
 
 // ➕ Enviar contacto
 router.post('/', mailerController.sendContact);
-
 module.exports = router;

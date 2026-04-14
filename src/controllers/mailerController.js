@@ -8,6 +8,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
 exports.sendContact = async (req, res) => {
   try {
     const { name, email, message, lang } = req.body;
