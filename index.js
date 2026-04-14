@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 app.use(cors({
   origin: [
     'http://localhost:4321', // Astro en desarrollo
+    'http://localhost:3000', // React en desarrollo
     'https://juansueldo.dev', // tu web en producción
     'https://ipinfo-tawny-psi.vercel.app'
   ],
