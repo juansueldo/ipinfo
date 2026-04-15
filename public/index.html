@@ -266,7 +266,7 @@
 // ──────────────────────────────────────────
 const API       = 'https://ipinfo-tawny-psi.vercel.app/api/ips';
 const API_STATS = API + '/stats';
-const API_MAILS = 'https://ipinfo-tawny-psi.vercel.app/api/mails';
+const API_MAILS = 'https://ipinfo-tawny-psi.vercel.app/api/mailer';
 
 let chart, dtTable, mailsTable, map, markersLayer;
 let allData  = [];
@@ -346,24 +346,28 @@ async function loadIps() {
   const data = await res.json();
   allData = data;
 
+  // Actualización de contadores (Nota: risk y datacenter no vienen en tu JSON de ejemplo, se ponen en 0)
   document.getElementById('stat-total').textContent     = data.length;
-  document.getElementById('stat-dc').textContent        = data.filter(d => d.risk?.is_datacenter).length;
-  document.getElementById('stat-countries').textContent = new Set(data.map(d => d.location?.country_code).filter(Boolean)).size;
-  document.getElementById('stat-risk').textContent      = data.filter(d => (d.risk?.risk_score||0) > 50).length;
+  document.getElementById('stat-dc').textContent        = data.filter(d => d.is_datacenter).length || 0;
+  document.getElementById('stat-countries').textContent = new Set(data.map(d => d.country_iso).filter(Boolean)).size;
+  document.getElementById('stat-risk').textContent      = data.filter(d => (d.risk_score || 0) > 50).length || 0;
 
   markersLayer.clearLayers();
   data.forEach(v => {
-    const lat = v.location?.latitude, lng = v.location?.longitude;
+    const lat = v.latitude, lng = v.longitude; // Coordenadas directas
     if (!lat || !lng) return;
+    
+    const isDC = v.is_datacenter || false;
     const icon = L.divIcon({
       className: '',
-      html: `<div style="width:12px;height:12px;border-radius:50%;background:${v.risk?.is_datacenter?'#f75f5f':'#4ff7a0'};border:2px solid #fff;box-shadow:0 0 6px ${v.risk?.is_datacenter?'#f75f5f':'#4ff7a0'};"></div>`,
+      html: `<div style="width:12px;height:12px;border-radius:50%;background:${isDC ? '#f75f5f' : '#4ff7a0'};border:2px solid #fff;box-shadow:0 0 6px ${isDC ? '#f75f5f' : '#4ff7a0'};"></div>`,
       iconSize: [12,12], iconAnchor: [6,6]
     });
+    
     L.marker([lat,lng],{icon}).addTo(markersLayer).bindPopup(`
       <b style="font-family:'Space Mono',monospace;font-size:.75rem">${v.ip}</b><br>
-      <span style="font-size:.75rem">${v.location?.city||''}, ${v.location?.country||''}</span><br>
-      <span style="font-size:.7rem;color:#888">${v.isp?.org||''}</span>
+      <span style="font-size:.75rem">${v.city || ''}, ${v.country || ''}</span><br>
+      <span style="font-size:.7rem;color:#888">${v.isp || ''}</span>
     `);
   });
 
@@ -372,42 +376,40 @@ async function loadIps() {
   const tbody = document.getElementById('ips-tbody');
   tbody.innerHTML = '';
   data.forEach(v => {
-    const risk  = v.risk || {};
+    // Ajuste de Flags (usando las propiedades que vengan de la API o false por defecto)
     const flags = [
-      risk.is_mobile     ? '<span class="badge-bool yes">Mobile</span>' : '',
-      risk.is_vpn        ? '<span class="badge-bool yes">VPN</span>'    : '',
-      risk.is_tor        ? '<span class="badge-bool yes">Tor</span>'    : '',
-      risk.is_proxy      ? '<span class="badge-bool yes">Proxy</span>'  : '',
-      risk.is_datacenter ? '<span class="badge-bool yes">DC</span>'     : '<span class="badge-bool no">Res.</span>',
+      v.is_mobile     ? '<span class="badge-bool yes">Mobile</span>' : '',
+      v.is_vpn        ? '<span class="badge-bool yes">VPN</span>'    : '',
+      v.is_datacenter ? '<span class="badge-bool yes">DC</span>'     : '<span class="badge-bool no">Res.</span>',
     ].join(' ');
 
-    const riskScore = risk.risk_score || 0;
+    const riskScore = v.risk_score || 0;
     const riskBadge = riskScore > 50
       ? `<span class="badge-risk high"><i class="bi bi-exclamation-circle"></i>${riskScore}</span>`
       : `<span class="badge-risk low"><i class="bi bi-shield-check"></i>${riskScore}</span>`;
 
-    const date = new Date(v.createdAt).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const city = [v.location?.city, v.location?.country_code].filter(Boolean).join(', ');
+    const date = new Date(v.createdAt).toLocaleString('es-AR');
+    const locationStr = [v.city, v.country_iso].filter(Boolean).join(', ');
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--text-muted);font-family:'Space Mono',monospace;font-size:.72rem">${v.id}</td>
       <td><span class="ip-mono">${v.ip}</span></td>
       <td>
-        <div style="font-size:.82rem;font-weight:600">${city}</div>
-        <div style="font-size:.7rem;color:var(--text-muted);font-family:'Space Mono',monospace">${v.location?.state||''}</div>
+        <div style="font-size:.82rem;font-weight:600">${locationStr}</div>
+        <div style="font-size:.7rem;color:var(--text-muted);font-family:'Space Mono',monospace">${v.region || ''}</div>
       </td>
       <td>
-        <div class="org-text" title="${v.isp?.org||''}">${v.isp?.org||'—'}</div>
-        <div style="font-size:.67rem;color:var(--text-muted);font-family:'Space Mono',monospace">${v.isp?.asn||''}</div>
+        <div class="org-text" title="${v.isp || ''}">${v.isp || '—'}</div>
+        <div style="font-size:.67rem;color:var(--text-muted);font-family:'Space Mono',monospace">ASN: ${v.asn || ''}</div>
       </td>
-      <td><span style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--accent2)">${v.path||'/'}</span></td>
+      <td><span style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--accent2)">${v.path || '/'}</span></td>
       <td>${riskBadge}</td>
       <td>${flags}</td>
       <td style="font-size:.73rem;color:var(--text-secondary);white-space:nowrap">${date}</td>
       <td style="display:flex;gap:6px;align-items:center">
-        <button onclick='showDetail(${v.id})' style="background:var(--accent-glow);border:1px solid var(--accent);color:var(--accent);border-radius:7px;padding:4px 10px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer">Ver</button>
-        <button onclick='confirmDelete(${v.id},"${v.ip}")' style="background:#f75f5f18;border:1px solid #f75f5f;color:#f75f5f;border-radius:7px;padding:4px 10px;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer"><i class="bi bi-trash3"></i></button>
+        <button onclick='showDetail(${v.id})' class="btn-ver">Ver</button>
+        <button onclick='confirmDelete(${v.id},"${v.ip}")' class="btn-delete"><i class="bi bi-trash3"></i></button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -542,7 +544,6 @@ function renderPages(pages) {
 function showDetail(id) {
   const v = allData.find(x => x.id === id);
   if (!v) return;
-  const r    = v.risk || {};
   const bool = val => val ? '<span class="badge-bool yes">Sí</span>' : '<span class="badge-bool no">No</span>';
 
   document.getElementById('modalTitle').innerHTML = `<span class="ip-mono">${v.ip}</span> &nbsp;— ID #${v.id}`;
@@ -551,26 +552,18 @@ function showDetail(id) {
       <div class="detail-item"><span class="detail-label">IP</span><span class="detail-value"><span class="ip-mono">${v.ip}</span></span></div>
       <div class="detail-item"><span class="detail-label">Fecha</span><span class="detail-value">${new Date(v.createdAt).toLocaleString('es-AR')}</span></div>
       <div class="detail-divider"></div>
-      <div class="detail-item"><span class="detail-label">País</span><span class="detail-value">${v.location?.country||'—'} (${v.location?.country_code||''})</span></div>
-      <div class="detail-item"><span class="detail-label">Ciudad</span><span class="detail-value">${v.location?.city||'—'}, ${v.location?.state||''}</span></div>
-      <div class="detail-item"><span class="detail-label">ZIP</span><span class="detail-value">${v.location?.zipcode||'—'}</span></div>
-      <div class="detail-item"><span class="detail-label">Timezone</span><span class="detail-value">${v.location?.timezone||'—'}</span></div>
-      <div class="detail-item"><span class="detail-label">Coordenadas</span><span class="detail-value" style="font-family:'Space Mono',monospace;font-size:.75rem">${v.location?.latitude?.toFixed(4)}, ${v.location?.longitude?.toFixed(4)}</span></div>
+      <div class="detail-item"><span class="detail-label">País</span><span class="detail-value">${v.country || '—'} (${v.country_iso || ''})</span></div>
+      <div class="detail-item"><span class="detail-label">Ciudad</span><span class="detail-value">${v.city || '—'}, ${v.region || ''}</span></div>
+      <div class="detail-item"><span class="detail-label">ZIP</span><span class="detail-value">${v.postal || '—'}</span></div>
+      <div class="detail-item"><span class="detail-label">Timezone</span><span class="detail-value">${v.timezone || '—'}</span></div>
+      <div class="detail-item"><span class="detail-label">Coordenadas</span><span class="detail-value">${v.latitude}, ${v.longitude}</span></div>
       <div class="detail-divider"></div>
-      <div class="detail-item"><span class="detail-label">ISP</span><span class="detail-value">${v.isp?.isp||'—'}</span></div>
-      <div class="detail-item"><span class="detail-label">Organización</span><span class="detail-value">${v.isp?.org||'—'}</span></div>
-      <div class="detail-item"><span class="detail-label">ASN</span><span class="detail-value" style="font-family:'Space Mono',monospace">${v.isp?.asn||'—'}</span></div>
+      <div class="detail-item"><span class="detail-label">ISP / Organización</span><span class="detail-value">${v.isp || '—'}</span></div>
+      <div class="detail-item"><span class="detail-label">ASN</span><span class="detail-value">AS${v.asn || '—'}</span></div>
       <div class="detail-divider"></div>
-      <div class="detail-item"><span class="detail-label">Ruta</span><span class="detail-value" style="font-family:'Space Mono',monospace;color:var(--accent2)">${v.path||'/'}</span></div>
-      <div class="detail-item"><span class="detail-label">Idioma</span><span class="detail-value">${v.lang||'—'}</span></div>
-      <div class="detail-item" style="grid-column:1/-1"><span class="detail-label">User Agent</span><span class="detail-value" style="font-size:.72rem;font-family:'Space Mono',monospace;word-break:break-all">${v.userAgent||'—'}</span></div>
-      <div class="detail-divider"></div>
-      <div class="detail-item"><span class="detail-label">Risk Score</span><span class="detail-value">${r.risk_score||0}</span></div>
-      <div class="detail-item"><span class="detail-label">Datacenter</span><span class="detail-value">${bool(r.is_datacenter)}</span></div>
-      <div class="detail-item"><span class="detail-label">VPN</span><span class="detail-value">${bool(r.is_vpn)}</span></div>
-      <div class="detail-item"><span class="detail-label">Tor</span><span class="detail-value">${bool(r.is_tor)}</span></div>
-      <div class="detail-item"><span class="detail-label">Proxy</span><span class="detail-value">${bool(r.is_proxy)}</span></div>
-      <div class="detail-item"><span class="detail-label">Mobile</span><span class="detail-value">${bool(r.is_mobile)}</span></div>
+      <div class="detail-item"><span class="detail-label">Ruta</span><span class="detail-value">${v.path || '/'}</span></div>
+      <div class="detail-item"><span class="detail-label">Dispositivo</span><span class="detail-value">${v.device_type || '—'}</span></div>
+      <div class="detail-item" style="grid-column:1/-1"><span class="detail-label">User Agent</span><span class="detail-value" style="font-size:.7rem">${v.userAgent || '—'}</span></div>
     </div>
   `;
   new bootstrap.Modal(document.getElementById('detailModal')).show();
@@ -582,8 +575,9 @@ function showDetail(id) {
 let mailsDtTable = null;
 
 async function loadMails() {
+  const statusEl = document.getElementById('mails-updated');
   try {
-    const res  = await fetch(API_MAILS);
+    const res = await fetch(API_MAILS);
     const json = await res.json();
     allMails = json.data || json; // soporta { data: [...] } o array directo
 

@@ -53,7 +53,7 @@ exports.createIP = async (req, res) => {
     } catch (err) {
       console.warn('Error obteniendo geo data:', err.message);
     }
-
+    
     const {
       path,
       lang,
