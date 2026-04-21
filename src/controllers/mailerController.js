@@ -1,5 +1,8 @@
 const nodemailer = require('nodemailer');
+const nodemailerExpressHandlebars = require('nodemailer-express-handlebars').default;
+const path = require('path');
 const { Mailer } = require('../models');
+
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -8,6 +11,17 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
+
+// Configuración de handlebars para nodemailer
+transporter.use('compile', nodemailerExpressHandlebars({
+  viewEngine: {
+    extname: '.hbs',
+    partialsDir: path.resolve(__dirname, '../templates'),
+    defaultLayout: false,
+  },
+  viewPath: path.resolve(__dirname, '../templates'),
+  extName: '.hbs',
+}));
 
 
 exports.sendContact = async (req, res) => {
@@ -20,57 +34,41 @@ exports.sendContact = async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
 
+
       await Mailer.create({ name, email, message });
-    // 📩 Mail para vos
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: `Nuevo contacto de ${name}`,
-      text: `
-Nuevo contacto:
+      //  Mail para vos (admin)
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER,
+        subject: `Nuevo contacto de ${name}`,
+        template: 'admin_notify',
+        context: {
+          name,
+          email,
+          message,
+          date: new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
+        }
+      });
 
-Nombre: ${name}
-Email: ${email}
 
-Mensaje:
-${message}
-      `
-    });
-
-    // 🌍 Mensajes según idioma
-    const messages = {
-      es: {
-        subject: 'Recibí tu mensaje',
-        text: `Hola ${name},
-
-¡Gracias por contactarte! He recibido tu mensaje correctamente.
-
-En breve estaré revisándolo y te responderé lo antes posible.
-
-Saludos,
-Juan Sueldo`
-      },
-      en: {
-        subject: 'Message received',
-        text: `Hi ${name},
-
-Thank you for reaching out! I have received your message successfully.
-
-I will review it shortly and get back to you as soon as possible.
-
-Best regards,
-Juan Sueldo`
-      }
+    // Mensajes según idioma
+    const subjects = {
+      es: 'Recibí tu mensaje',
+      en: 'Message received'
     };
+    const subject = subjects[lang] || subjects['es'];
 
-    const selected = messages[lang] || messages.es;
-
-    // 📬 Auto-respuesta
+    // Auto-respuesta HTML
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: selected.subject,
-      text: selected.text
+      subject,
+      template: 'autoresponse',
+      context: {
+        name,
+        message,
+        isEn: lang === 'en'
+      }
     });
 
     res.json({ ok: true });
