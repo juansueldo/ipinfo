@@ -1,11 +1,15 @@
-const express = require('express');
+import express from 'express';
+import {
+	sendContact,
+	listMails,
+	getMailById
+} from '../controllers/mailerController.js';
+
 const router = express.Router();
 
-// Controladores
-const mailerController = require('../controllers/mailerController');
-
 // ➕ Enviar contacto
-router.post('/', mailerController.sendContact);
-router.get('/', mailerController.listMails);
-router.get('/:id', mailerController.getMailById);
-module.exports = router;
+router.post('/', sendContact);
+router.get('/', listMails);
+router.get('/:id', getMailById);
+
+export default router;

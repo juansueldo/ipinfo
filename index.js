@@ -1,9 +1,16 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
+import ipRoutes from './src/routes/ipRoutes.js';
+import mailerRoutes from './src/routes/mailer.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
-const path = require('path');
-const rateLimit = require('express-rate-limit');
 
 app.use(cors({
   origin: [
@@ -32,8 +39,8 @@ const limiter = rateLimit({
 
 
 // Rutas
-app.use('/api/ips', require('./src/routes/ipRoutes'));
-app.use('/api/mailer', limiter, require('./src/routes/mailer'));
+app.use('/api/ips', ipRoutes);
+app.use('/api/mailer', limiter, mailerRoutes);
 
 // Exportar la aplicación para usarla en server.js
-module.exports = app;
+export default app;

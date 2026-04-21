@@ -1,15 +1,21 @@
-const express = require('express');
+import express from 'express';
+import {
+	getAllIPs,
+	createIP,
+	getStats,
+	getIPById,
+	updateIP,
+	deleteIP
+} from '../controllers/ipController.js';
+
 const router = express.Router();
 
-// Controladores
-const ipController = require('../controllers/ipController');
-
 // Rutas
-router.get('/', ipController.getAllIPs);
-router.post('/', ipController.createIP);
-router.get('/stats', ipController.getStats);
-router.get('/:id', ipController.getIPById);
-router.put('/:id', ipController.updateIP);
-router.delete('/:id', ipController.deleteIP);
+router.get('/', getAllIPs);
+router.post('/', createIP);
+router.get('/stats', getStats);
+router.get('/:id', getIPById);
+router.put('/:id', updateIP);
+router.delete('/:id', deleteIP);
 
-module.exports = router;
+export default router;

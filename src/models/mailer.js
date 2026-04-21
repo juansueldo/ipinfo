@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('./db');
+import { DataTypes } from 'sequelize';
+import sequelize from './db.js';
 
 const mailer = sequelize.define('Mailer', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -8,4 +8,4 @@ const mailer = sequelize.define('Mailer', {
   message: DataTypes.TEXT
 });
 
-module.exports = mailer;
+export default mailer;

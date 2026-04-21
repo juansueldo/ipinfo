@@ -1,8 +1,10 @@
-require('dotenv').config();
-require('dns').setDefaultResultOrder('ipv4first');
+import 'dotenv/config';
+import { setDefaultResultOrder } from 'dns';
+import { Sequelize } from 'sequelize';
+import pg from 'pg';
 
-const { Sequelize } = require('sequelize');
-const pg = require('pg');
+setDefaultResultOrder('ipv4first');
+
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   dialectModule: pg,
@@ -15,4 +17,4 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   logging: false
 });
 
-module.exports = sequelize;
+export default sequelize;

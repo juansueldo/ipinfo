@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('./db');
+import { DataTypes } from 'sequelize';
+import sequelize from './db.js';
 
 const IP = sequelize.define('IP', {
   id: { 
@@ -59,4 +59,4 @@ const IP = sequelize.define('IP', {
   timestamps: true
 });
 
-module.exports = IP;
+export default IP;

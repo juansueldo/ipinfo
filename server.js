@@ -1,5 +1,7 @@
-const app = require('./index');
-const { syncModels } = require('./src/models/index');
+
+import app from './index.js';
+import { syncModels } from './src/models/index.js';
+
 
 const PORT = process.env.PORT || 3000;
 

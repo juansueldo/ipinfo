@@ -1,7 +1,12 @@
-const nodemailer = require('nodemailer');
-const nodemailerExpressHandlebars = require('nodemailer-express-handlebars').default;
-const path = require('path');
-const { Mailer } = require('../models');
+
+import nodemailer from 'nodemailer';
+import nodemailerExpressHandlebars from 'nodemailer-express-handlebars';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Mailer } from '../models/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 const transporter = nodemailer.createTransport({
@@ -24,7 +29,7 @@ transporter.use('compile', nodemailerExpressHandlebars({
 }));
 
 
-exports.sendContact = async (req, res) => {
+export const sendContact = async (req, res) => {
   try {
     const { name, email, message, lang } = req.body;
     if (req.body.website) {
@@ -80,7 +85,7 @@ exports.sendContact = async (req, res) => {
 };
 
 // Listar todos los correos
-exports.listMails = async (req, res) => {
+export const listMails = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
     const offset = (page - 1) * limit;
@@ -116,7 +121,7 @@ exports.listMails = async (req, res) => {
 };
 
 // Ver detalle por ID
-exports.getMailById = async (req, res) => {
+export const getMailById = async (req, res) => {
   try {
     const { id } = req.params;
 

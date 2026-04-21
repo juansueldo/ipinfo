@@ -1,9 +1,9 @@
 
-// Ajustá esto según tu ORM (Sequelize, Prisma, etc.)
-const { IP } = require('../models'); 
+
+import { IP } from '../models/index.js';
 
 // 🔍 Obtener todas las IPs
-exports.getAllIPs = async (req, res) => {
+export const getAllIPs = async (req, res) => {
   try {
     const ips = await IP.findAll({
       order: [['createdAt', 'DESC']],
@@ -19,7 +19,7 @@ exports.getAllIPs = async (req, res) => {
 
 
 // 🔍 Obtener una IP por ID
-exports.getIPById = async (req, res) => {
+export const getIPById = async (req, res) => {
   try {
     const ip = await IP.findByPk(req.params.id);
 
@@ -34,7 +34,7 @@ exports.getIPById = async (req, res) => {
 };
 
 // ➕ Crear IP (TRACK VISIT)
-exports.createIP = async (req, res) => {
+export const createIP = async (req, res) => {
   try {
     let ip =
       req.headers['x-forwarded-for'] ||
@@ -119,7 +119,7 @@ exports.createIP = async (req, res) => {
 };
 
 // ✏️ Actualizar
-exports.updateIP = async (req, res) => {
+export const updateIP = async (req, res) => {
   try {
     const ip = await IP.findByPk(req.params.id);
 
@@ -136,7 +136,7 @@ exports.updateIP = async (req, res) => {
 };
 
 // ❌ Eliminar
-exports.deleteIP = async (req, res) => {
+export const deleteIP = async (req, res) => {
   try {
     const ip = await IP.findByPk(req.params.id);
 
@@ -152,7 +152,7 @@ exports.deleteIP = async (req, res) => {
   }
 };
 
-exports.getStats = async (req, res) => {
+export const getStats = async (req, res) => {
   try {
     const visits = await IP.findAll();
 
